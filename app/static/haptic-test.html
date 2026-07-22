@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Haptic test</title>
+<style>
+  body { background: #0c0e14; color: #d7dae3; font-family: -apple-system, sans-serif;
+         padding: 2rem 1.5rem; max-width: 480px; margin: 0 auto; }
+  .test { background: #151823; border: 1px solid #262b3d; border-radius: 12px;
+          padding: 1rem; margin-bottom: 1rem; }
+  h3 { margin: 0 0 0.5rem; font-size: 1rem; color: #e8a849; }
+  p { margin: 0 0 0.8rem; font-size: 0.85rem; color: #7a8095; }
+  button { background: #e8a849; border: none; border-radius: 10px; padding: 0.8rem 1.2rem;
+           font-size: 1rem; font-weight: 600; cursor: pointer; }
+  input[type=checkbox] { transform: scale(1.8); margin: 0.5rem; }
+  #log { font-size: 0.8rem; color: #6fbf8b; margin-top: 0.5rem; min-height: 1.2em; }
+</style>
+</head>
+<body>
+<h2>Haptic diagnostics</h2>
+
+<div class="test">
+  <h3>1. Real switch (tap it yourself)</h3>
+  <p>If tapping this native switch gives NO haptic, the problem is iOS version (needs 17.4+) or Settings > Sounds &amp; Haptics > System Haptics is off.</p>
+  <input type="checkbox" switch id="sw1">
+</div>
+
+<div class="test">
+  <h3>2. Programmatic switch click</h3>
+  <p>Same trick SleepNoise uses: JS clicks a hidden switch.</p>
+  <button onclick="document.getElementById('sw2').click(); log('clicked hidden switch')">Test programmatic</button>
+  <input type="checkbox" switch id="sw2" style="position:absolute;left:-9999px">
+</div>
+
+<div class="test">
+  <h3>3. Vibration API</h3>
+  <p>navigator.vibrate - Android only, expected to fail on iPhone.</p>
+  <button onclick="log(navigator.vibrate ? 'vibrate(50): ' + navigator.vibrate(50) : 'API not available (normal on iOS)')">Test vibrate</button>
+</div>
+
+<div class="test">
+  <h3>Environment</h3>
+  <div id="env" style="font-size:0.75rem; color:#7a8095; word-break:break-all;"></div>
+</div>
+
+<div id="log"></div>
+
+<script>
+function log(m) { document.getElementById("log").textContent = m; }
+document.getElementById("env").textContent =
+  navigator.userAgent + " | standalone: " + (navigator.standalone === true) +
+  " | switch support: " + ("switch" in document.createElement("input") ? "?" : "n/a");
+</script>
+</body>
+</html>
