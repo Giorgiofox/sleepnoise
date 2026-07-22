@@ -35,7 +35,7 @@ Configuration in `.env`: ports, Icecast passwords, `DEFAULT_ROOM` (Sonos room na
 
 ## Web UI
 
-<img src="docs/screenshot.png" alt="SleepNoise web UI" width="390">
+<img src="docs/screenshot.png" alt="SleepNoise web UI" width="330"> <img src="docs/screenshot-night.png" alt="SleepNoise red night mode" width="330">
 
 `https://sleepnoise.example.com/` - dark, phone-friendly control panel: pick speaker, sound, volume, sleep timer, Start/Stop. Shows live playback state and remaining timer. The timer uses the native Sonos sleep timer, so it survives app restarts and is visible in the Sonos app too.
 
