@@ -26,22 +26,22 @@ SOUNDS = {
     "deep": {
         "mount": "deep.mp3",
         "title": "Deep airflow",
-        "desc": "Low-passed brown, soft airflow",
+        "desc": "Brown noise low-passed at 400 Hz. Closest to the MODIO soft-airflow sound.",
     },
     "brown": {
         "mount": "brown.mp3",
         "title": "Brown noise",
-        "desc": "Full spectrum, deep rumble",
+        "desc": "Full spectrum, deep rumble. The classic sleep noise.",
     },
     "pink": {
         "mount": "pink.mp3",
         "title": "Pink noise",
-        "desc": "Balanced, softer highs",
+        "desc": "Balanced energy per octave, softer highs than white.",
     },
     "white": {
         "mount": "white.mp3",
         "title": "White noise",
-        "desc": "Bright, max masking",
+        "desc": "Bright and hissy, maximum masking power.",
     },
 }
 
