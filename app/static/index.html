@@ -76,6 +76,12 @@
     border-radius: 999px; padding: 0.45rem 0.9rem; font-size: 0.9rem; cursor: pointer;
     transition: border-color 0.15s, background 0.15s;
   }
+  .chip, .card, button.big, #nightbtn { position: relative; }
+  /* Invisible native switch overlay: a physical tap on it fires the iOS haptic */
+  .hsw {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    opacity: 0; margin: 0; cursor: pointer;
+  }
   .chip.sel { border-color: var(--accent); color: var(--accent); background: var(--card-hover); }
   .chip .sub { display: block; font-size: 0.68rem; color: var(--muted); }
   .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
@@ -126,7 +132,7 @@
 <div class="wrap">
   <header>
     <h1>Sleep<span>Noise</span></h1>
-    <button id="nightbtn">Night</button>
+    <button id="nightbtn"><span id="nightlabel">Night</span></button>
     <div id="conn">connecting</div>
   </header>
 
@@ -155,32 +161,41 @@
   <div id="status">loading</div>
 </div>
 
-<!-- Hidden native switch: toggling it via JS produces a haptic tick on iOS Safari >= 17.4 -->
-<input type="checkbox" switch id="haptic-sw" style="position:absolute;left:-9999px" aria-hidden="true" tabindex="-1">
-<label for="haptic-sw" id="haptic-lb" style="position:absolute;left:-9999px" aria-hidden="true"></label>
-
 <script>
 // Block Safari pinch-zoom (proprietary gesture events); double-tap zoom
-// is already disabled by touch-action: pan-y
+// is already disabled by touch-action
 document.addEventListener("gesturestart", e => e.preventDefault());
 
-function haptic(pattern) {
-  if (navigator.vibrate) { navigator.vibrate(pattern || 10); return; }
-  try { document.getElementById("haptic-sw").click(); } catch (e) {}
+// iOS fires the haptic only on a physical tap landing on a real native
+// switch, so every control carries an invisible switch overlay. Android
+// gets navigator.vibrate in the same handler.
+function attachHaptic(el, fn, pattern) {
+  const sw = document.createElement("input");
+  sw.type = "checkbox";
+  sw.setAttribute("switch", "");
+  sw.className = "hsw";
+  sw.setAttribute("aria-hidden", "true");
+  sw.tabIndex = -1;
+  sw.addEventListener("click", e => {
+    e.stopPropagation();
+    if (el.disabled) { e.preventDefault(); return; }
+    if (navigator.vibrate) navigator.vibrate(pattern || 10);
+    fn(e);
+  });
+  el.appendChild(sw);
 }
 
 const THEME_META = document.querySelector('meta[name="theme-color"]');
 function applyMode(mode) {
   document.documentElement.dataset.mode = mode;
-  document.getElementById("nightbtn").textContent = mode === "night" ? "Day" : "Night";
+  document.getElementById("nightlabel").textContent = mode === "night" ? "Day" : "Night";
   THEME_META.setAttribute("content", mode === "night" ? "#000000" : "#0c0e14");
 }
-document.getElementById("nightbtn").onclick = () => {
-  haptic();
+attachHaptic(document.getElementById("nightbtn"), () => {
   const next = document.documentElement.dataset.mode === "night" ? "dark" : "night";
   localStorage.setItem("sleepnoise-mode", next);
   applyMode(next);
-};
+});
 applyMode(new URLSearchParams(location.search).get("mode") ||
           localStorage.getItem("sleepnoise-mode") || "dark");
 
@@ -221,7 +236,7 @@ function renderSpeakers() {
     const b = document.createElement("button");
     b.className = "chip" + (sp.name === sel.speaker ? " sel" : "");
     b.textContent = sp.name;
-    b.onclick = () => { haptic(); sel.speaker = sp.name; renderSpeakers(); };
+    attachHaptic(b, () => { sel.speaker = sp.name; renderSpeakers(); });
     $("speakers").appendChild(b);
   }
 }
@@ -232,7 +247,7 @@ function renderSounds() {
     const b = document.createElement("button");
     b.className = "card" + (key === sel.sound ? " sel" : "");
     b.innerHTML = `<div class="t">${s.title}</div><div class="d">${s.desc}</div>`;
-    b.onclick = () => { haptic(); sel.sound = key; renderSounds(); };
+    attachHaptic(b, () => { sel.sound = key; renderSounds(); });
     $("sounds").appendChild(b);
   }
 }
@@ -243,7 +258,7 @@ function renderTimers() {
     const b = document.createElement("button");
     b.className = "chip" + (t.min === sel.timer ? " sel" : "");
     b.textContent = t.label;
-    b.onclick = () => { haptic(); sel.timer = t.min; renderTimers(); };
+    attachHaptic(b, () => { sel.timer = t.min; renderTimers(); });
     $("timers").appendChild(b);
   }
 }
@@ -278,10 +293,9 @@ async function refresh() {
 }
 
 $("vol").oninput = () => { $("volval").textContent = $("vol").value + "%"; };
-$("vol").onchange = () => haptic();
+$("vol").onchange = () => { if (navigator.vibrate) navigator.vibrate(10); };
 
-$("btn-start").onclick = async () => {
-  haptic([12, 40, 12]);
+attachHaptic($("btn-start"), async () => {
   $("err").textContent = "";
   $("btn-start").disabled = true;
   try {
@@ -297,10 +311,9 @@ $("btn-start").onclick = async () => {
   } finally {
     $("btn-start").disabled = false;
   }
-};
+}, [12, 40, 12]);
 
-$("btn-stop").onclick = async () => {
-  haptic();
+attachHaptic($("btn-stop"), async () => {
   $("err").textContent = "";
   try {
     await api("/api/stop", { speaker: sel.speaker });
@@ -308,7 +321,7 @@ $("btn-stop").onclick = async () => {
   } catch (e) {
     $("err").textContent = e.message;
   }
-};
+});
 
 refresh();
 setInterval(refresh, 5000);
