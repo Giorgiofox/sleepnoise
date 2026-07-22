@@ -145,7 +145,16 @@
   <div id="status">loading</div>
 </div>
 
+<!-- Hidden native switch: toggling it via JS produces a haptic tick on iOS Safari >= 17.4 -->
+<input type="checkbox" switch id="haptic-sw" style="position:absolute;left:-9999px" aria-hidden="true" tabindex="-1">
+<label for="haptic-sw" id="haptic-lb" style="position:absolute;left:-9999px" aria-hidden="true"></label>
+
 <script>
+function haptic(pattern) {
+  if (navigator.vibrate) { navigator.vibrate(pattern || 10); return; }
+  try { document.getElementById("haptic-lb").click(); } catch (e) {}
+}
+
 const THEME_META = document.querySelector('meta[name="theme-color"]');
 function applyMode(mode) {
   document.documentElement.dataset.mode = mode;
@@ -153,6 +162,7 @@ function applyMode(mode) {
   THEME_META.setAttribute("content", mode === "night" ? "#000000" : "#0c0e14");
 }
 document.getElementById("nightbtn").onclick = () => {
+  haptic();
   const next = document.documentElement.dataset.mode === "night" ? "dark" : "night";
   localStorage.setItem("sleepnoise-mode", next);
   applyMode(next);
@@ -197,7 +207,7 @@ function renderSpeakers() {
     const b = document.createElement("button");
     b.className = "chip" + (sp.name === sel.speaker ? " sel" : "");
     b.textContent = sp.name;
-    b.onclick = () => { sel.speaker = sp.name; renderSpeakers(); };
+    b.onclick = () => { haptic(); sel.speaker = sp.name; renderSpeakers(); };
     $("speakers").appendChild(b);
   }
 }
@@ -208,7 +218,7 @@ function renderSounds() {
     const b = document.createElement("button");
     b.className = "card" + (key === sel.sound ? " sel" : "");
     b.innerHTML = `<div class="t">${s.title}</div><div class="d">${s.desc}</div>`;
-    b.onclick = () => { sel.sound = key; renderSounds(); };
+    b.onclick = () => { haptic(); sel.sound = key; renderSounds(); };
     $("sounds").appendChild(b);
   }
 }
@@ -219,7 +229,7 @@ function renderTimers() {
     const b = document.createElement("button");
     b.className = "chip" + (t.min === sel.timer ? " sel" : "");
     b.innerHTML = t.label + (t.sub ? `<span class="sub">${t.sub}</span>` : "");
-    b.onclick = () => { sel.timer = t.min; renderTimers(); };
+    b.onclick = () => { haptic(); sel.timer = t.min; renderTimers(); };
     $("timers").appendChild(b);
   }
 }
@@ -254,8 +264,10 @@ async function refresh() {
 }
 
 $("vol").oninput = () => { $("volval").textContent = $("vol").value + "%"; };
+$("vol").onchange = () => haptic();
 
 $("btn-start").onclick = async () => {
+  haptic([12, 40, 12]);
   $("err").textContent = "";
   $("btn-start").disabled = true;
   try {
@@ -274,6 +286,7 @@ $("btn-start").onclick = async () => {
 };
 
 $("btn-stop").onclick = async () => {
+  haptic();
   $("err").textContent = "";
   try {
     await api("/api/stop", { speaker: sel.speaker });
