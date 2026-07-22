@@ -1,0 +1,70 @@
+# SleepNoise - Home Assistant package (optional)
+#
+# HA is NOT in the streaming path: the SleepNoise app controls Sonos
+# directly over UPnP and Sonos pulls the audio from Icecast. These
+# rest_commands only forward control requests to the SleepNoise API,
+# so HA automations, dashboards and voice assistants can trigger it.
+#
+# Install: configuration.yaml ->
+#   homeassistant:
+#     packages: !include_dir_named packages
+# then copy this file to config/packages/sleepnoise.yaml.
+#
+# "speaker" is the Sonos room name (as shown in the Sonos app),
+# not an HA entity_id. Leave it empty ("") to use the DEFAULT_ROOM
+# configured in the SleepNoise .env.
+
+rest_command:
+  sleepnoise_play:
+    url: "https://sleepnoise.example.com/api/play"
+    method: POST
+    content_type: "application/json"
+    payload: >-
+      {"speaker": "{{ speaker | default('') }}",
+       "sound": "{{ sound | default('deep') }}",
+       "volume": {{ volume | default(15) }},
+       "timer_minutes": {{ timer_minutes | default(480) }}}
+  sleepnoise_stop:
+    url: "https://sleepnoise.example.com/api/stop"
+    method: POST
+    content_type: "application/json"
+    payload: >-
+      {"speaker": "{{ speaker | default('') }}"}
+
+script:
+  sleepnoise_start:
+    alias: "SleepNoise start"
+    icon: mdi:sleep
+    sequence:
+      - action: rest_command.sleepnoise_play
+        data:
+          sound: deep
+          volume: 15
+          timer_minutes: 480
+
+  sleepnoise_stop:
+    alias: "SleepNoise stop"
+    icon: mdi:stop
+    sequence:
+      - action: rest_command.sleepnoise_stop
+
+automation:
+  - alias: "SleepNoise webhook start"
+    id: sleepnoise_webhook_start
+    triggers:
+      - trigger: webhook
+        webhook_id: sleepnoise-start-x7k2
+        allowed_methods: [POST]
+        local_only: true
+    actions:
+      - action: script.sleepnoise_start
+
+  - alias: "SleepNoise webhook stop"
+    id: sleepnoise_webhook_stop
+    triggers:
+      - trigger: webhook
+        webhook_id: sleepnoise-stop-x7k2
+        allowed_methods: [POST]
+        local_only: true
+    actions:
+      - action: script.sleepnoise_stop
